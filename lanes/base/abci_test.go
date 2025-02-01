@@ -40,6 +40,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		}
 		lane := s.initLane(math.LegacyMustNewDecFromStr("0.5"), expectedExecution)
 		s.Require().NoError(lane.Insert(s.ctx, tx))
+		s.Require().Equal(1, lane.CountTx())
 
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
@@ -57,6 +58,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().Equal(0, len(finalProposal.Txs))
 		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
 		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
+		s.Require().Equal(0, lane.CountTx())
+		s.Require().False(lane.Contains(tx))
 	})
 
 	s.Run("should not build a proposal when gas configured to lane is too small", func() {
@@ -79,6 +82,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Insert the transaction into the lane
 		s.Require().NoError(lane.Insert(s.ctx, tx))
+		s.Require().Equal(1, lane.CountTx())
 
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
@@ -100,6 +104,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().Equal(0, len(finalProposal.Txs))
 		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
 		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
+		s.Require().Equal(0, lane.CountTx())
+		s.Require().False(lane.Contains(tx))
 	})
 
 	s.Run("should not build a proposal when gas configured to lane is too small p2", func() {
@@ -144,6 +150,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().Equal(0, len(finalProposal.Txs))
 		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
 		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
+		s.Require().Equal(0, lane.CountTx())
 	})
 
 	s.Run("should be able to build a proposal with a tx that just fits in", func() {
@@ -528,7 +535,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		)
 		s.Require().NoError(err)
 
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(_ sdk.Context, _ sdk.Tx) bool {
 			return true
 		}
 
@@ -1036,7 +1043,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		// First lane matches this lane the other does not.
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(_ sdk.Context, tx sdk.Tx) bool {
 			return tx == tx1
 		}
 
@@ -1294,7 +1301,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx4,
 		}
 
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(_ sdk.Context, tx sdk.Tx) bool {
 			if tx == tx1 || tx == tx2 {
 				return false
 			}
@@ -1380,7 +1387,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx4,
 		}
 
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(_ sdk.Context, _ sdk.Tx) bool {
 			return true
 		}
 
@@ -1455,7 +1462,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx4,
 		}
 
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(_ sdk.Context, tx sdk.Tx) bool {
 			if tx == tx1 || tx == tx3 {
 				return false
 			}
@@ -1673,7 +1680,7 @@ func (s *BaseTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool) sdk.
 		txCache[hashStr] = pass
 	}
 
-	anteHandler := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, err error) {
+	anteHandler := func(ctx sdk.Context, tx sdk.Tx, _ bool) (newCtx sdk.Context, err error) {
 		bz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
 

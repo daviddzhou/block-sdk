@@ -49,7 +49,6 @@ func (h *ProposalHandler) PrepareLaneHandler() base.PrepareLaneHandler {
 			}
 
 			cacheCtx, write := ctx.CacheContext()
-
 			bundle, err := h.VerifyBidBasic(cacheCtx, bidTx, proposal, limit)
 			if err != nil {
 				h.lane.Logger().Info(
@@ -261,7 +260,7 @@ func (h *ProposalHandler) VerifyBidTx(ctx sdk.Context, bidTx sdk.Tx, bundle []sd
 		return fmt.Errorf("invalid bid tx; failed to execute ante handler: %w", err)
 	}
 
-	// verify all of the bundled transactions
+	// verify all bundled transactions
 	for _, bundledTx := range bundle {
 		if h.lane.Match(ctx, bundledTx) {
 			return fmt.Errorf("invalid bid tx; bundled tx is another bid transaction")
